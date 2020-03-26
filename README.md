@@ -1,70 +1,9 @@
-# Developer assignment
-Welcome to the GamesLabs developer assignment. The goal of this assignment is to test your ability to use :
-- git
-- maven
-- component and event based programming
-- java programming
-- code quality
-- follow vague descriptions
-
-## Requirements
-Before starting this assignment, you will need to have :
-- java 8+
-- maven 3+
-- git
-
-# The assignment
-You will need to do different tasks. You may need to change the original code in order to complete these tasks.
-
-
-# Component based project
-A component is a piece of code handling one feature, and only one feature.
-It can interact with other components through events.
-A component must extends the `net.gameslabs.api.Component` class.
-
-## Component cycle
-When a component is loaded, the `onLoad` is called. You can register events in this method by doing so:
-```java
-@Override
-public void onLoad() {
-    registerEvent(GiveXpEvent.class, this::onGiveXPToPlayer);
-}
-
-private void onGiveXPToPlayer(GiveXpEvent event) {
-    // Do something
-}
-```
-The `onUnload` method is called when the component unloads.
-
-## Events
-You may send an event by using the `Component.send` method:
-```java
-private void onGiveXPToPlayer(GiveXpEvent event) {
-    int previousLevel = ...
-    int nextLevel = ...
-    if (previousLevel != nextLevel) {
-        send(new PlayerGainLevelEvent(event.getPlayer(), event.getSkill(), nextLevel));
-    }
-}
-```
-Events go through components in the order they're loaded in (i.e. priority). If an event is cancelled, it will not go through lower priority components.
-
-## Main structure
-Here is the list of the main packages of this project:
-- **assignment** This is where most of your code will be made. assignment.Main is the main class to execute
-- **net.gameslabs** This package contains mostly back-end code.
-- **net.gameslabs.events**  A package containing the different events.
-
-## The main class
-The Main class:
-```java
-public static void main(String[] args) {
-    new Assignment(
-        new MyXPBoosterComponent()
-    ).run();
-}
-```
-The assignment class takes components in its constructor. Components are loaded in order.
+# Features
+- Combat: attack other players with very basic attacks.
+    Killing another player plunders their loot.
+- DXP for construction!!!
+- Fully supported mining system with multiple ores, level restrictions, and inventory interaction.
+- Inventory system with both single items and stacked items, plus infitine stack size.
 
 # The assignment
 Here is the list of tasks you need to achieve:

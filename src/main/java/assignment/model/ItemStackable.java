@@ -27,4 +27,9 @@ public class ItemStackable extends Item {
     public boolean equals(Object obj) {
         return super.equals(obj) && count == ((ItemStackable) obj).count;
     }
+    
+    @Override
+	public ItemStackable clone() {
+    	return new ItemStackable(getId(), count);
+    }
 }

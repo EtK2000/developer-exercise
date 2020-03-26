@@ -3,9 +3,11 @@ package assignment.components;
 import java.util.HashMap;
 
 import assignment.events.InventoryAddEvent;
+import assignment.events.InventoryGetItemEvent;
 import assignment.events.InventoryQueryEvent;
 import assignment.events.InventoryRemoveEvent;
 import assignment.model.Inventory;
+import assignment.model.Item;
 import net.gameslabs.api.Component;
 
 public class MyInventoryComponent extends Component {
@@ -15,8 +17,24 @@ public class MyInventoryComponent extends Component {
     @Override
     public void onLoad() {
         registerEvent(InventoryAddEvent.class, this::onAdd);
+        registerEvent(InventoryGetItemEvent.class, this::onQueryFirstItem);
         registerEvent(InventoryQueryEvent.class, this::onQuery);
         registerEvent(InventoryRemoveEvent.class, this::onRemove);
+    }
+
+    private void onQueryFirstItem(InventoryGetItemEvent event) {
+        Inventory inventory = inventories.get(event.getPlayer().getId());
+
+        // only query the item if there's an inventory and an item
+        if (inventory == null)
+            event.setCancelled(true);
+        else {
+            Item item = inventory.getFirstItem();
+            if (item == null)
+                event.setCancelled(true);
+
+            event.setItem(item);
+        }
     }
 
     // add the item to the player's inventory
@@ -35,7 +53,9 @@ public class MyInventoryComponent extends Component {
         Inventory inventory = inventories.get(event.getPlayer().getId());
 
         // only query the item if there's an inventory
-        if (inventory != null)
+        if (inventory == null)
+            event.setCancelled(true);
+        else
             event.setFound(inventory.queryItem(event.getItem()));
     }
 
@@ -44,7 +64,9 @@ public class MyInventoryComponent extends Component {
         Inventory inventory = inventories.get(event.getPlayer().getId());
 
         // only remove the item if there's an inventory
-        if (inventory != null)
+        if (inventory == null)
+            event.setCancelled(true);
+        else
             event.setItem(inventory.removeItem(event.getItem()));
     }
 

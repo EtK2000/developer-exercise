@@ -7,7 +7,7 @@ package assignment.model;
  * {@link Item#equals(Object)}
  **/
 public class Item {
-    private final String id;
+    private final String id;// could be protected, eh...
 
     public Item(String id) {
         this.id = id;
@@ -27,5 +27,10 @@ public class Item {
         // items are only equal if they are the same class
         // this also functions as instanceof check
         return obj.getClass() == getClass() && id.equals(((Item) obj).id);
+    }
+    
+    @Override
+	public Item clone() {
+    	return new Item(id);
     }
 }
