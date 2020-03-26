@@ -2,6 +2,7 @@ package assignment.components;
 
 import net.gameslabs.api.Component;
 import net.gameslabs.events.GiveXpEvent;
+import net.gameslabs.model.Skill;
 
 public class MyXPBoosterComponent extends Component {
 
@@ -10,8 +11,14 @@ public class MyXPBoosterComponent extends Component {
         registerEvent(GiveXpEvent.class, this::onGiveXP);
     }
 
+    // enable DXP in the construction skill
     private void onGiveXP(GiveXpEvent event) {
-        // TODO: complete me
+        if (event.getSkill() == Skill.CONSTRUCTION)
+            event.setXp(2 * event.getXp());// DXP = 2 * XP
+
+        // if not construction, leave as default XP
+        // which incidental is dXP also...
+        // LOW: maybe work on a less confusing naming scheme for 1x
     }
 
     @Override
