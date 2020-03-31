@@ -1,14 +1,21 @@
 package assignment.model;
 
-public class Inventory {
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.Optional;
+
+public class Inventory implements Serializable {
+    private static final long serialVersionUID = 6872973361634140398L;
+
     private final Item[] inv;
 
     // holds the index of the next free slot for appending and reverse removal
     private int freeSlot;// defaults to 0
 
     public Inventory(int maxSize) {
-        if (maxSize < 1)
-            throw new IllegalArgumentException("invantory size must be at least 1");
+        if (maxSize < 1) throw new IllegalArgumentException("inventory size must be at least 1");
 
         inv = new Item[maxSize];
     }
@@ -18,7 +25,7 @@ public class Inventory {
      * 
      * @return the leftover item after adding or null if added
      **/
-    public Item addItem(Item item) {
+    public Optional<Item> addItem(Item item) {
         // stackable items get added to an existing stacks if available
         if (item instanceof ItemStackable) {
             ItemStackable toAdd = (ItemStackable) item;
@@ -29,28 +36,6 @@ public class Inventory {
                     // add as many as we can to this stack
                     ItemStackable invStack = (ItemStackable) inv[i];
 
-                    if (invStack.getCount() == ItemStackable.STACK_SIZE_INFINITE)
-                        return null;// infinity + const = infinity
-
-                    else if (toAdd.getCount() == ItemStackable.STACK_SIZE_INFINITE) {
-                        boolean hasMore = invStack.getCount() == ItemStackable.STACK_SIZE_MAX;
-                        invStack.setCount(ItemStackable.STACK_SIZE_INFINITE);
-
-                        // now that we have an infinite stack, remove all stacks after
-                        if (hasMore) {
-                            ItemStackable finiteMax = new ItemStackable(item.getId(), ItemStackable.STACK_SIZE_MAX);
-
-                            // as long as we manage to remove finite amounts,
-                            // we have more stacks;
-                            // there used to be an issue with old JVMs having an empty
-                            // loop body, so this is an old habit :)
-                            while (removeItem(finiteMax) != null)
-                                Thread.yield();
-                        }
-
-                        return null;// const + infinity = infinity
-                    }
-
                     if (invStack.getCount() != ItemStackable.STACK_SIZE_MAX) {
                         // number of available count in the stack
                         int stackFree = ItemStackable.STACK_SIZE_MAX - invStack.getCount();
@@ -59,8 +44,7 @@ public class Inventory {
                         // calculated like so to prevent underflows
                         if (stackFree <= toAdd.getCount()) {
                             invStack.setCount(invStack.getCount() + toAdd.getCount());
-
-                            return null; // all done here
+                            return Optional.empty(); // all done here
                         }
 
                         // max out the current stack,
@@ -78,16 +62,16 @@ public class Inventory {
         // TODO: when changed to an array, add bounds check
         if (freeSlot < inv.length) {
             inv[freeSlot++] = item;
-            return null;
+            return Optional.empty();
         }
 
         // return the leftover item because this inventory is full
-        return item;
+        return Optional.of(item);
     }
 
     // get the first item from the inventory if there is one
-    public Item getFirstItem() {
-        return freeSlot > 0 ? inv[0] : null;
+    public Optional<Item> getFirstItem() {
+        return freeSlot > 0 ? Optional.of(inv[0]) : Optional.empty();
     }
 
     // check if the item is contained, and look at count if stack
@@ -97,17 +81,11 @@ public class Inventory {
         // remove starting from the end
         for (int i = 0; i < freeSlot; i++) {
             if (inv[i].similar(item)) {
-                if (stack == null)
-                    return true;// item found
+                if (stack == null) return true;// item found
 
                 ItemStackable invStack = (ItemStackable) inv[i];
 
-                if (invStack.getCount() == ItemStackable.STACK_SIZE_INFINITE || invStack.getCount() >= stack.getCount())
-                    return true;// found enough or more
-
-                // TODO: maybe find a way to not check every time
-                if (stack.getCount() == ItemStackable.STACK_SIZE_INFINITE)
-                    return false;// we already know that there are no infinite stacks here
+                if (invStack.getCount() >= stack.getCount()) return true;// found enough or more
 
                 // remove from our stack, so we know how much we need to find
                 stack.setCount(stack.getCount() - invStack.getCount());
@@ -124,39 +102,54 @@ public class Inventory {
         freeSlot--;
     }
 
-    public Item removeItem(Item item) {
+    public Optional<Item> removeItem(Item item) {
         ItemStackable stack = item instanceof ItemStackable ? (ItemStackable) item : null;
 
         // remove starting from the end
         for (int i = freeSlot - 1; i >= 0; i--) {
             if (inv[i].similar(item)) {
+            	//non-stackable items just need to be removed
                 if (stack == null) {
                     removeSlot(i);
-                    return null;// item removed
+                    return Optional.empty();// item removed
                 }
 
+                
+                // stackable items need to be decremented by the correct amount
                 ItemStackable invStack = (ItemStackable) inv[i];
 
-                if (invStack.getCount() != ItemStackable.STACK_SIZE_INFINITE) {
-                    if (invStack.getCount() > stack.getCount()) {
-                        invStack.setCount(invStack.getCount() - stack.getCount());
-                        return null;
-                    }
-                    if (invStack.getCount() == stack.getCount()) {
-                        removeSlot(i);
-                        return null;
-                    }
-
-                    // remove the slot, update freeSlot, and lower the remaining
-                    stack.setCount(stack.getCount() - invStack.getCount());
+                if (invStack.getCount() > stack.getCount()) {
+                    invStack.setCount(invStack.getCount() - stack.getCount());
+                    return Optional.empty();
                 }
+                if (invStack.getCount() == stack.getCount()) {
+                    removeSlot(i);
+                    return Optional.empty();
+                }
+
+                // remove the slot, update freeSlot, and lower the remaining
+                stack.setCount(stack.getCount() - invStack.getCount());
                 removeSlot(i);
             }
         }
 
-        // return what's left
-        return item;// infinity - infinity = unknown; so return infinity
-        // it actually depends on what type of infinity, א0-א0=0
-        // although that's thinking too deeply about this
+        // return what's left to remove and hasn't been found
+        return Optional.of(item);
+    }
+
+    //
+    // The below methods are for serialization
+    //
+
+    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+        freeSlot = ois.readInt();
+        for (int i = 0; i < freeSlot; i++)
+            inv[i] = (Item) ois.readObject();
+    }
+
+    private void writeObject(ObjectOutputStream oos) throws IOException {
+        oos.writeInt(freeSlot);
+        for (int i = 0; i < freeSlot; i++)
+        	oos.writeObject(inv[i]);
     }
 }

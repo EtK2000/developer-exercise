@@ -1,22 +1,28 @@
 package assignment.events;
 
+import java.util.Optional;
+
 import assignment.model.Item;
 import net.gameslabs.api.Player;
 import net.gameslabs.api.PlayerEvent;
 
 public class InventoryRemoveEvent extends PlayerEvent {
-    private Item item;
+    private Optional<Item> item;
 
     public InventoryRemoveEvent(Player player, Item item) {
         super(player);
-        this.item = item;
+        this.item = Optional.of(item);
+    }
+
+    public boolean hasItem() {
+        return item.isPresent();
     }
 
     public Item getItem() {
-        return item;
+        return item.get();
     }
 
-    public void setItem(Item item) {
+    public void setItem(Optional<Item> item) {
         this.item = item;
     }
 }

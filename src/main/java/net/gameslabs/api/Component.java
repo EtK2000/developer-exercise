@@ -1,13 +1,16 @@
 package net.gameslabs.api;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * An abstract component that can listen and register events
  */
 public abstract class Component {
-
-    private Map<Class, List<EventMethod>> registeredEvents;
+    private Map<Class<?>, List<EventMethod<?>>> registeredEvents;
     private ComponentRegistry registry;
 
     public Component() {
@@ -18,7 +21,7 @@ public abstract class Component {
         registeredEvents.computeIfAbsent(eventType, e -> new ArrayList<>()).add(method);
     }
 
-    public final List<EventMethod> getEvents(Event event) {
+    public final List<EventMethod<?>> getEvents(Event event) {
         return registeredEvents.getOrDefault(event.getClass(), Collections.emptyList());
     }
 

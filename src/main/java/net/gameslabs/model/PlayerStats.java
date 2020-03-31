@@ -1,10 +1,13 @@
 package net.gameslabs.model;
 
+import java.io.Serializable;
 import java.util.EnumMap;
 import java.util.Map;
 
-public class PlayerStats {
-    private Map<Skill, Integer> xpStats;
+public class PlayerStats implements Serializable {
+	private static final long serialVersionUID = 993377730440985814L;
+	
+	private Map<Skill, Integer> xpStats;
 
     public PlayerStats() {
         xpStats = new EnumMap<>(Skill.class);

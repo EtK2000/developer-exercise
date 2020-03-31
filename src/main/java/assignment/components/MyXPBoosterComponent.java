@@ -13,8 +13,7 @@ public class MyXPBoosterComponent extends Component {
 
     // enable DXP in the construction skill
     private void onGiveXP(GiveXpEvent event) {
-        if (event.getSkill() == Skill.CONSTRUCTION)
-            event.setXp(2 * event.getXp());// DXP = 2 * XP
+        if (event.getSkill() == Skill.CONSTRUCTION) event.setXp(2 * event.getXp());
 
         // if not construction, leave as default XP
         // which incidental is dXP also...

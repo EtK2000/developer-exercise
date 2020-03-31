@@ -1,5 +1,6 @@
 package assignment.components;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 import assignment.events.DamagedByEvent;
@@ -7,11 +8,12 @@ import assignment.events.InventoryAddEvent;
 import assignment.events.InventoryGetItemEvent;
 import assignment.events.InventoryRemoveEvent;
 import assignment.events.QueryHealthEvent;
-import assignment.model.Item;
+import assignment.events.ReadDataEvent;
+import assignment.events.WriteDataEvent;
 import net.gameslabs.api.Player;
 import net.gameslabs.model.Skill;
 
-public class MyHealthComponent extends ComponentExt {
+public class MyHealthComponent extends PlayerComponent {
     private static final float DMG_PER_LVL = 0.5f, ESPILON_HP = 0.01f;
 
     // We can't interact with anything else directly, so we store health here
@@ -22,6 +24,9 @@ public class MyHealthComponent extends ComponentExt {
     public void onLoad() {
         registerEvent(DamagedByEvent.class, this::onDamagedBy);
         registerEvent(QueryHealthEvent.class, this::onHealthChecked);
+        
+        registerEvent(ReadDataEvent.class, this::onRead);
+        registerEvent(WriteDataEvent.class, this::onWrite);
     }
 
     private float getHealth(Player player) {
@@ -42,8 +47,7 @@ public class MyHealthComponent extends ComponentExt {
                 / getPlayerLevel(event.getPlayer(), Skill.DEFENSE);
 
         // hurt the defender if we can
-        if (damage < ESPILON_HP)
-            event.setCancelled(true);
+        if (damage < ESPILON_HP) event.setCancelled(true);
         else {
             // floats can be jank sometimes, so make it a bit better
             health = health - damage;
@@ -59,7 +63,7 @@ public class MyHealthComponent extends ComponentExt {
                 while (true) {
                     send(inventoryGetItemEvent);
 
-                    if (inventoryGetItemEvent.isCancelled())
+                    if (!inventoryGetItemEvent.hasItem())
                         break;// no more items to remove
 
                     // the arguments to events are modified, so we need to clone
@@ -86,5 +90,25 @@ public class MyHealthComponent extends ComponentExt {
     public void onUnload() {
         // we might as well cleanup
         hp.clear();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void onRead(ReadDataEvent event) {
+        try {
+        	hp.clear();
+            hp.putAll((HashMap<String, Float>) event.getIn().readObject());
+        }
+        catch (IOException | ClassNotFoundException | ClassCastException e) {
+            e.printStackTrace();// LOW: do something
+        }
+    }
+
+    private void onWrite(WriteDataEvent event) {
+        try {
+            event.getOut().writeObject(hp);
+        }
+        catch (IOException e) {
+            e.printStackTrace();// LOW: do something
+        }
     }
 }

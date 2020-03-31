@@ -1,13 +1,17 @@
 package assignment.model;
 
+import java.io.Serializable;
+
 /**
  * A simple base class for containing items
  * 
  * If custom data is required, Override this class and
  * {@link Item#equals(Object)}
  **/
-public class Item {
-    private final String id;// could be protected, eh...
+public class Item implements Cloneable, Serializable {
+    private static final long serialVersionUID = 1323756366809374321L;
+    
+    private String id;
 
     public Item(String id) {
         this.id = id;
@@ -30,7 +34,7 @@ public class Item {
     }
     
     @Override
-	public Item clone() {
-    	return new Item(id);
+    public Item clone() {
+        return new Item(id);
     }
 }

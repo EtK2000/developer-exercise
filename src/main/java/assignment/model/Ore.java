@@ -3,7 +3,7 @@ package assignment.model;
 public enum Ore {
     COPPER(5, 1), TIN(5, 1), COAL(10, 5), IRON(20, 10), RUNE(50, 30), PHRIK(150, 50);
     
-    // no need for a getter, but I'm being consistant
+    // no need for a getter, but I'm being consistent
     private final int mineXP, minLvl;
     
     private Ore(int mineXP, int minLvl) {

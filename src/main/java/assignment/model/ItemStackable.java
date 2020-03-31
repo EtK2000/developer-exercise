@@ -1,11 +1,13 @@
 package assignment.model;
 
 public class ItemStackable extends Item {
+    private static final long serialVersionUID = 1913017045795532694L;
+
     // extern this so switching to other data types is ez pz
-    public static final int STACK_SIZE_MAX = Integer.MAX_VALUE, STACK_SIZE_INFINITE = -1;
+    public static final int STACK_SIZE_MAX = Integer.MAX_VALUE;
 
     // The amount if items in this stack
-    // Anything negative is treated as infinity and enforced to -1
+    // Anything negative is treated as 0
     private int count;
 
     public ItemStackable(String id, int count) {
@@ -18,7 +20,7 @@ public class ItemStackable extends Item {
     }
 
     public void setCount(int count) {
-        this.count = count <= -1 ? STACK_SIZE_INFINITE : count;// enforce -1 for infinity
+        this.count = count > 0 ? count : 0;// enforce 0 for negatives
     }
 
     // Yes, I know casting both here and in super.equals is less efficient...
@@ -29,7 +31,7 @@ public class ItemStackable extends Item {
     }
     
     @Override
-	public ItemStackable clone() {
-    	return new ItemStackable(getId(), count);
+    public ItemStackable clone() {
+        return new ItemStackable(getId(), count);
     }
 }

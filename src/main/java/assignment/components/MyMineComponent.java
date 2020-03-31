@@ -6,7 +6,7 @@ import assignment.model.Item;
 import net.gameslabs.events.GiveXpEvent;
 import net.gameslabs.model.Skill;
 
-public class MyMineComponent extends ComponentExt {
+public class MyMineComponent extends PlayerComponent {
     @Override
     public void onLoad() {
         registerEvent(OreMineEvent.class, this::onMine);
@@ -14,19 +14,23 @@ public class MyMineComponent extends ComponentExt {
 
     // add the item to the player's inventory
     private void onMine(OreMineEvent event) {
-        if (getPlayerLevel(event.getPlayer(), Skill.MINING) < event.getOre().getMinMineLvl())
-            event.setCancelled(true);// you cannot mine X with your lvl
+        // you cannot mine X with your lvl
+        if (getPlayerLevel(event.getPlayer(), Skill.MINING) < event.getOre().getMinMineLvl()) {
+            event.setCancelled(true);// I would inline, but long lines are ew
+        }
 
         else {
             // intern concatenation because it will be used often if multiple ores exist
             InventoryAddEvent add = new InventoryAddEvent(event.getPlayer(), new Item((event.getOre().name() + " Ore").intern()));
             send(add);
-            if (add.getItem() != null)
-                event.setCancelled(true);
+            
+            // if the event has an item after being sent, the item wasn't added
+            if (add.hasItem()) event.setCancelled(true);
 
             // only mine it if we have inventory space to add it
-            else
+            else {
                 send(new GiveXpEvent(event.getPlayer(), Skill.MINING, event.getOre().getMineXP()));
+            }
         }
     }
 

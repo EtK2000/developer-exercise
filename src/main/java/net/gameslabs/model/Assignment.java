@@ -1,5 +1,10 @@
 package net.gameslabs.model;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Arrays;
 
 import assignment.events.DamagedByEvent;
@@ -8,6 +13,8 @@ import assignment.events.InventoryQueryEvent;
 import assignment.events.InventoryRemoveEvent;
 import assignment.events.OreMineEvent;
 import assignment.events.QueryHealthEvent;
+import assignment.events.ReadDataEvent;
+import assignment.events.WriteDataEvent;
 import assignment.model.Item;
 import assignment.model.ItemStackable;
 import assignment.model.Ore;
@@ -49,6 +56,12 @@ public class Assignment {
 
         // assignment 4
         registry.sendEvent(new GiveXpEvent(offPlayer, Skill.DEFENSE, getXpForLevel(51)));
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("start.bin"))) {
+            registry.sendEvent(new WriteDataEvent(oos));
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
 
         // the other stuffz
         runChecks();
@@ -56,78 +69,108 @@ public class Assignment {
     }
 
     private void runChecks() {
-        // assignment 1
-        if (getLevel(Skill.EXPLORATION) != 1)
-            throw new AssignmentFailed("Exploration XP should be set to level 1");
-        if (getLevel(Skill.CONSTRUCTION) != 2)
-            throw new AssignmentFailed("Construction XP should be set to level 2");
+        //////////////////
+        // assignment 1 //
+        //////////////////
+        
+        if (getLevel(Skill.EXPLORATION) != 1) throw new AssignmentFailed("Exploration XP should be set to level 1");
+        if (getLevel(Skill.CONSTRUCTION) != 2) throw new AssignmentFailed("Construction XP should be set to level 2");
 
-        //
-        // assignment 2
+        //////////////////
+        // assignment 2 //
+        //////////////////
+        
         InventoryQueryEvent query = new InventoryQueryEvent(mainPlayer, new Item("Addy Sword"));
         registry.sendEvent(query);
-        if (!query.found())
-            throw new AssignmentFailed("What did you do with your sword?");
+        if (!query.found()) throw new AssignmentFailed("What did you do with your sword?");
 
         query = new InventoryQueryEvent(mainPlayer, new ItemStackable("Blood Rune", 69));
         registry.sendEvent(query);
-        if (!query.found())
-            throw new AssignmentFailed("Did you use ALL YOUR RUNES?!?!");
+        if (!query.found()) throw new AssignmentFailed("Did you use ALL YOUR RUNES?!?!");
 
         registry.sendEvent(new InventoryRemoveEvent(mainPlayer, new ItemStackable("Blood Rune", 400)));
         registry.sendEvent(query);
-        if (query.found())
-            throw new AssignmentFailed("What kinda magic is this?");
+        if (query.found()) throw new AssignmentFailed("What kinda magic is this?");
 
-        //
-        // assignment 3
+        //////////////////
+        // assignment 3 //
+        //////////////////
+        
         OreMineEvent mineEvent = new OreMineEvent(mainPlayer, Ore.COAL);
         registry.sendEvent(mineEvent);
-        if (!mineEvent.isCancelled())
-            throw new AssignmentFailed("Silly player, you cannot mine coal!");
+        if (!mineEvent.isCancelled()) throw new AssignmentFailed("Silly player, you cannot mine coal!");
 
         mineEvent = new OreMineEvent(mainPlayer, Ore.COPPER);
         registry.sendEvent(mineEvent);
-        if (mineEvent.isCancelled())
-            throw new AssignmentFailed("C'mon, you can't be THAT lame...");
+        if (mineEvent.isCancelled()) throw new AssignmentFailed("C'mon, you can't be THAT lame...");
 
         mineEvent = new OreMineEvent(mainPlayer, Ore.COAL);
         registry.sendEvent(mineEvent);
-        if (mineEvent.isCancelled())
-            throw new AssignmentFailed("You didn't level up when missing 2 XP???");
+        if (mineEvent.isCancelled()) throw new AssignmentFailed("You didn't level up when missing 2 XP???");
 
-        //
-        // assignment 4
+        //////////////////
+        // assignment 4 //
+        //////////////////
+        
         QueryHealthEvent queryHealthEvent = new QueryHealthEvent(mainPlayer);
         registry.sendEvent(queryHealthEvent);
         float fullHP = queryHealthEvent.getHealth();
-        if (fullHP == 0)
-            throw new AssignmentFailed("You're already dead, you just haven't caught up yet...");
+        if (fullHP == 0) throw new AssignmentFailed("You're already dead, you just haven't caught up yet...");
 
         // p2 attacks p1
         registry.sendEvent(new DamagedByEvent(mainPlayer, offPlayer));
         registry.sendEvent(queryHealthEvent);
-        if (fullHP == queryHealthEvent.getHealth())
-            throw new AssignmentFailed("Dodging is illegal!");
+        if (fullHP == queryHealthEvent.getHealth()) throw new AssignmentFailed("Dodging is illegal!");
 
         // p1 attacks back, but misses
         DamagedByEvent retaliation = new DamagedByEvent(offPlayer, mainPlayer);
         registry.sendEvent(retaliation);
-        if (!retaliation.isCancelled())
-            throw new AssignmentFailed("You Haxx0r!");
+        if (!retaliation.isCancelled()) throw new AssignmentFailed("You Haxx0r!");
 
         // p2 kills p1
         registry.sendEvent(new DamagedByEvent(mainPlayer, offPlayer));
 
         query = new InventoryQueryEvent(mainPlayer, new Item("Addy Sword"));
         registry.sendEvent(query);
-        if (query.found())
-            throw new AssignmentFailed("Keepinventory is off, bro...");
+        if (query.found()) throw new AssignmentFailed("Keepinventory is off, bro...");
 
         query = new InventoryQueryEvent(offPlayer, new Item("Addy Sword"));
         registry.sendEvent(query);
-        if (!query.found())
-            throw new AssignmentFailed("Did you drop it already?");
+        if (!query.found()) throw new AssignmentFailed("Did you drop it already?");
+        
+        // check that end != start
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("end.bin"))) {
+            registry.sendEvent(new WriteDataEvent(oos));
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        // compare the files byte by byte
+        try (FileInputStream start = new FileInputStream("start.bin")) {
+            try (FileInputStream end = new FileInputStream("end.bin")) {
+                int from_start, from_end;
+                
+                while ((from_start = start.read()) == (from_end = end.read()));
+                
+                // only true if we reached EOF in both
+                if (from_start == from_end) throw new AssignmentFailed("Things have changed!");
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        // attempt to load and validate the loaded data
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("start.bin"))) {
+            registry.sendEvent(new ReadDataEvent(ois));
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        query = new InventoryQueryEvent(mainPlayer, new Item("Addy Sword"));
+        registry.sendEvent(query);
+        if (!query.found()) throw new AssignmentFailed("Load, dammit!");
     }
 
     private int getLevel(Skill skill) {
