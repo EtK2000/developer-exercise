@@ -16,7 +16,6 @@ public class Inventory implements Serializable {
 
     public Inventory(int maxSize) {
         if (maxSize < 1) throw new IllegalArgumentException("inventory size must be at least 1");
-
         inv = new Item[maxSize];
     }
 
@@ -36,13 +35,14 @@ public class Inventory implements Serializable {
                     // add as many as we can to this stack
                     ItemStackable invStack = (ItemStackable) inv[i];
 
+                    // add as many as we can to this stack (if we can)
                     if (invStack.getCount() != ItemStackable.STACK_SIZE_MAX) {
                         // number of available count in the stack
                         int stackFree = ItemStackable.STACK_SIZE_MAX - invStack.getCount();
 
                         // combined the counts are valid amounts,
                         // calculated like so to prevent underflows
-                        if (stackFree <= toAdd.getCount()) {
+                        if (stackFree >= toAdd.getCount()) {
                             invStack.setCount(invStack.getCount() + toAdd.getCount());
                             return Optional.empty(); // all done here
                         }

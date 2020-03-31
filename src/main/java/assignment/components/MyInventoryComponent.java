@@ -11,7 +11,6 @@ import assignment.events.InventoryRemoveEvent;
 import assignment.events.ReadDataEvent;
 import assignment.events.WriteDataEvent;
 import assignment.model.Inventory;
-import assignment.model.Item;
 import net.gameslabs.api.Component;
 
 public class MyInventoryComponent extends Component {
@@ -32,14 +31,8 @@ public class MyInventoryComponent extends Component {
     private void onQueryFirstItem(InventoryGetItemEvent event) {
         Inventory inventory = inventories.get(event.getPlayer().getId());
 
-        // if no item or no inventory return empty
-        if (inventory == null) event.setItem(Optional.empty());
-        else {
-            Optional<Item> item = inventory.getFirstItem();
-            if (!item.isPresent()) event.setCancelled(true);
-
-            event.setItem(item);
-        }
+        // if the inventory exists, get its first item
+        event.setItem(inventory != null ? inventory.getFirstItem() : Optional.empty());
     }
 
     // add the item to the player's inventory
@@ -58,9 +51,8 @@ public class MyInventoryComponent extends Component {
     private void onQuery(InventoryQueryEvent event) {
         Inventory inventory = inventories.get(event.getPlayer().getId());
 
-        // only query the item if there's an inventory
-        if (inventory == null) event.setCancelled(true);
-        else event.setFound(inventory.queryItem(event.getItem()));
+        // if the inventory exists, query the item
+        event.setFound(inventory != null && inventory.queryItem(event.getItem()));
     }
 
     // remove said item form the player's inventory
@@ -68,9 +60,8 @@ public class MyInventoryComponent extends Component {
         if (event.hasItem()) {
             Inventory inventory = inventories.get(event.getPlayer().getId());
 
-            // only remove the item if there's an inventory
-            if (inventory == null) event.setCancelled(true);
-            else event.setItem(inventory.removeItem(event.getItem()));
+            // if the inventory exists, attempt to remove the item
+            event.setItem(inventory != null ? inventory.removeItem(event.getItem()) : Optional.empty());
         }
     }
 

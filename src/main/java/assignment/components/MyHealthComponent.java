@@ -18,7 +18,7 @@ public class MyHealthComponent extends PlayerComponent {
 
     // We can't interact with anything else directly, so we store health here
     // Yes, I realize the cost of boxing and unboxing isn't worth it
-    private static final HashMap<String, Float> hp = new HashMap<>();
+    private final HashMap<String, Float> hp = new HashMap<>();
 
     @Override
     public void onLoad() {
