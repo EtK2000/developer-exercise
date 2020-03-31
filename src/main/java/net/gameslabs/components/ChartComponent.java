@@ -3,6 +3,7 @@ package net.gameslabs.components;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import assignment.events.ReadDataEvent;
 import assignment.events.WriteDataEvent;
@@ -58,20 +59,24 @@ public class ChartComponent extends Component {
     	persistence.clear();
     }
 
-    @SuppressWarnings("unchecked")
     private void onRead(ReadDataEvent event) {
         try {
         	persistence.clear();
-            persistence = (Map<String, PlayerStats>) event.getIn().readObject();
+            for (int i = event.getIn().readInt(); i > 0; i--)
+            	persistence.put(event.getIn().readUTF(), new PlayerStats(event.getIn()));
         }
-        catch (IOException | ClassNotFoundException | ClassCastException e) {
+        catch (IOException e) {
             e.printStackTrace();// LOW: do something
         }
     }
 
     private void onWrite(WriteDataEvent event) {
         try {
-            event.getOut().writeObject(persistence);
+            event.getOut().writeInt(persistence.size());
+            for (Entry<String, PlayerStats> e : persistence.entrySet()) {
+                event.getOut().writeUTF(e.getKey());
+                e.getValue().writeTo(event.getOut());
+            }
         }
         catch (IOException e) {
             e.printStackTrace();// LOW: do something

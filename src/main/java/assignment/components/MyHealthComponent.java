@@ -2,6 +2,8 @@ package assignment.components;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map.Entry;
+import java.util.Optional;
 
 import assignment.events.DamagedByEvent;
 import assignment.events.InventoryAddEvent;
@@ -59,6 +61,7 @@ public class MyHealthComponent extends PlayerComponent {
             // player has been killed, attempt to give their items to the killer
             if (health == 0) {
                 InventoryGetItemEvent inventoryGetItemEvent = new InventoryGetItemEvent(event.getPlayer());
+                inventoryGetItemEvent.setItem(Optional.empty());// set default, so it doesn't require other components to work
 
                 while (true) {
                     send(inventoryGetItemEvent);
@@ -92,20 +95,28 @@ public class MyHealthComponent extends PlayerComponent {
         hp.clear();
     }
 
-    @SuppressWarnings("unchecked")
+    //
+    // The below methods are for serialization
+    //
+
     private void onRead(ReadDataEvent event) {
         try {
-        	hp.clear();
-            hp.putAll((HashMap<String, Float>) event.getIn().readObject());
+            hp.clear();
+            for (int i = event.getIn().readInt(); i > 0; i--)
+                hp.put(event.getIn().readUTF(), event.getIn().readFloat());
         }
-        catch (IOException | ClassNotFoundException | ClassCastException e) {
+        catch (IOException e) {
             e.printStackTrace();// LOW: do something
         }
     }
 
     private void onWrite(WriteDataEvent event) {
         try {
-            event.getOut().writeObject(hp);
+            event.getOut().writeInt(hp.size());
+            for (Entry<String, Float> e : hp.entrySet()) {
+                event.getOut().writeUTF(e.getKey());
+                event.getOut().writeFloat(e.getValue());
+            }
         }
         catch (IOException e) {
             e.printStackTrace();// LOW: do something

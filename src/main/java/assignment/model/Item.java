@@ -1,6 +1,8 @@
 package assignment.model;
 
-import java.io.Serializable;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 
 /**
  * A simple base class for containing items
@@ -8,13 +10,15 @@ import java.io.Serializable;
  * If custom data is required, Override this class and
  * {@link Item#equals(Object)}
  **/
-public class Item implements Cloneable, Serializable {
-    private static final long serialVersionUID = 1323756366809374321L;
-    
+public class Item implements Cloneable, Streamable {
     private String id;
 
     public Item(String id) {
         this.id = id;
+    }
+
+    public Item(ObjectInputStream ois) throws IOException {
+        readFrom(ois);
     }
 
     final public String getId() {
@@ -36,5 +40,15 @@ public class Item implements Cloneable, Serializable {
     @Override
     public Item clone() {
         return new Item(id);
+    }
+
+    @Override
+    public void readFrom(ObjectInputStream ois) throws IOException {
+        id = ois.readUTF();
+    }
+
+    @Override
+    public void writeTo(ObjectOutputStream oos) throws IOException {
+        oos.writeUTF(id);
     }
 }

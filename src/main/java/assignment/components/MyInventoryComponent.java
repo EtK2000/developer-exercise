@@ -2,6 +2,7 @@ package assignment.components;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.Optional;
 
 import assignment.events.InventoryAddEvent;
@@ -41,7 +42,7 @@ public class MyInventoryComponent extends Component {
             Inventory inventory = inventories.get(event.getPlayer().getId());
 
             // if needed, create the inventory with some arbitrary size
-            if (inventory == null) inventories.put(event.getPlayer().getId(), inventory = new Inventory(32));
+            if (inventory == null) inventories.put(event.getPlayer().getId(), inventory = new Inventory(Inventory.DUMMY_SIZE));
 
             event.setItem(inventory.addItem(event.getItem()));
         }
@@ -71,20 +72,27 @@ public class MyInventoryComponent extends Component {
         inventories.clear();
     }
 
-    @SuppressWarnings("unchecked")
     private void onRead(ReadDataEvent event) {
         try {
             inventories.clear();
-            inventories.putAll((HashMap<String, Inventory>) event.getIn().readObject());
+            for (int i = event.getIn().readInt(); i > 0; i--) {
+                Inventory inv = new Inventory(Inventory.DUMMY_SIZE);
+                inventories.put(event.getIn().readUTF(), inv);
+                inv.readFrom(event.getIn());
+            }
         }
-        catch (IOException | ClassNotFoundException | ClassCastException e) {
+        catch (IOException e) {
             e.printStackTrace();// LOW: do something
         }
     }
 
     private void onWrite(WriteDataEvent event) {
         try {
-            event.getOut().writeObject(inventories);
+            event.getOut().writeInt(inventories.size());
+            for (Entry<String, Inventory> e : inventories.entrySet()) {
+                event.getOut().writeUTF(e.getKey());
+                e.getValue().writeTo(event.getOut());
+            }
         }
         catch (IOException e) {
             e.printStackTrace();// LOW: do something

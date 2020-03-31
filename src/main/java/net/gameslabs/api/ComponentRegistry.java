@@ -20,7 +20,7 @@ public class ComponentRegistry {
     public void sendEvent(Event event) {
         List<EventMethod> methods = componentList.stream().map(component -> component.getEvents(event)).flatMap(Collection::stream).collect(Collectors.toList());
         for (EventMethod eventMethod : methods) {
-            // Would require proper handling in a prodution environement
+            // Would require proper handling in a production environment
             eventMethod.onExecute(event);
             if (event.isCancelled()) {
                 break;

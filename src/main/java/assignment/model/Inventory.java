@@ -3,12 +3,12 @@ package assignment.model;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.Optional;
 
-public class Inventory implements Serializable {
-    private static final long serialVersionUID = 6872973361634140398L;
-
+public class Inventory implements Streamable {
+    public static final int DUMMY_SIZE = 32;
+    private static final byte ITEM_SINGLE = 0, ITEM_STACKABLE = 1;
+    
     private final Item[] inv;
 
     // holds the index of the next free slot for appending and reverse removal
@@ -142,15 +142,31 @@ public class Inventory implements Serializable {
     // The below methods are for serialization
     //
 
-    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+    @Override
+    public void readFrom(ObjectInputStream ois) throws IOException {
         freeSlot = ois.readInt();
-        for (int i = 0; i < freeSlot; i++)
-            inv[i] = (Item) ois.readObject();
+        for (int i = 0; i < freeSlot; i++) {
+        	switch (ois.readByte()) {
+                case ITEM_STACKABLE:
+                    inv[i] = new ItemStackable(ois);
+                    break;
+                case ITEM_SINGLE:
+                    inv[i] = new Item(ois);
+                    break;
+                default:
+                    throw new IOException("invalid item type");
+            }
+        }
     }
 
-    private void writeObject(ObjectOutputStream oos) throws IOException {
+    @Override
+    public void writeTo(ObjectOutputStream oos) throws IOException {
         oos.writeInt(freeSlot);
-        for (int i = 0; i < freeSlot; i++)
-            oos.writeObject(inv[i]);
+        for (int i = 0; i < freeSlot; i++) {
+            if (inv[i] instanceof ItemStackable) oos.writeByte(ITEM_STACKABLE);
+            else oos.writeByte(ITEM_SINGLE);
+            
+            inv[i].writeTo(oos);
+        }
     }
 }
