@@ -42,7 +42,7 @@ public class MyInventoryComponent extends Component {
             Inventory inventory = inventories.get(event.getPlayer().getId());
 
             // if needed, create the inventory with some arbitrary size
-            if (inventory == null) inventories.put(event.getPlayer().getId(), inventory = new Inventory(Inventory.DUMMY_SIZE));
+            if (inventory == null) inventories.put(event.getPlayer().getId(), inventory = new Inventory());
 
             event.setItem(inventory.addItem(event.getItem()));
         }
@@ -76,7 +76,7 @@ public class MyInventoryComponent extends Component {
         try {
             inventories.clear();
             for (int i = event.getIn().readInt(); i > 0; i--) {
-                Inventory inv = new Inventory(Inventory.DUMMY_SIZE);
+                Inventory inv = new Inventory();
                 inventories.put(event.getIn().readUTF(), inv);
                 inv.readFrom(event.getIn());
             }
