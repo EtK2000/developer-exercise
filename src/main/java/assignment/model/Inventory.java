@@ -42,8 +42,7 @@ public class Inventory implements Streamable {
                 });
             
             // if we've depleted our stack to add we're already done
-            if (toAdd.getCount() == 0)
-                return;
+            if (toAdd.getCount() == 0) return;
         }
 
         // stacks are full or no need to stack, so add remainder to the end
@@ -57,8 +56,7 @@ public class Inventory implements Streamable {
 
     // check if the item is contained, and look at count if stack
     public boolean queryItem(Item item) {
-        if (!(item instanceof ItemStackable))
-            return inv.stream().filter(it -> it.similar(item)).findFirst().isPresent();
+        if (!(item instanceof ItemStackable)) return inv.stream().filter(it -> it.similar(item)).findFirst().isPresent();
 
         // sum all counts of the stack in the inventory, and see if they're enough
         return inv.stream().filter(it -> it.similar(item))
