@@ -65,17 +65,15 @@ public class Inventory implements Streamable {
     }
 
     public Optional<Item> removeItem(Item item) {
-        if (!(item instanceof ItemStackable)) {
-            int index = inv.lastIndexOf(item);
-            
-            if (index > -1) {
-                inv.remove(index);
-                return Optional.empty();// item removed
-            }
-            
-            return Optional.of(item);// item not found
+        // first try to remove the item by looking for an exact copy
+        int index = inv.lastIndexOf(item);
+        if (index > -1) {
+            inv.remove(index);
+            return Optional.empty();// item removed
         }
+        if (!(item instanceof ItemStackable)) return Optional.of(item);// item not found
         
+        // if we didn't find an exact copy and the item is stackable, look for stacks
         ItemStackable stack = (ItemStackable) item;
 
         // remove starting from the end
