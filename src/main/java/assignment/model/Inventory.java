@@ -14,45 +14,40 @@ public class Inventory implements Streamable {
 
     /**
      * attempts to add the given item to the inventory
-     * 
-     * @return the leftover item after adding or null if added
      **/
-    public Optional<Item> addItem(Item item) {
+    public void addItem(Item item) {
         // stackable items get added to an existing stacks if available
         if (item instanceof ItemStackable) {
             ItemStackable toAdd = (ItemStackable) item;
 
             // check if there are any stacks of this item type in our inventory,
-            // the last stack will be the only one that isn't full,
-            // therefore we iterate from the end until we find it (if we do)
-            for (int i = inv.size() - 1; i >= 0; i--) {
-                if (inv.get(i).similar(toAdd)) {
+            // and add as many as we can into existing stacks
+            inv.stream().filter(it -> it.similar(item) && ((ItemStackable) it).getCount() < ItemStackable.STACK_SIZE_MAX)
+                .forEach(it -> {
                     // add as many as we can to this stack
-                    ItemStackable invStack = (ItemStackable) inv.get(i);
+                    ItemStackable invStack = (ItemStackable) it;
 
-                    // add as many as we can to this stack (if we can)
-                    if (invStack.getCount() != ItemStackable.STACK_SIZE_MAX) {
-                        // number of available count in the stack
-                        int stackFree = ItemStackable.STACK_SIZE_MAX - invStack.getCount();
+                    // add as many as we can to this stack
+                    // number of available count in the stack
+                    int stackFree = ItemStackable.STACK_SIZE_MAX - invStack.getCount();
 
-                        // combined the counts are valid amounts, calculated like so to prevent underflows
-                        if (stackFree >= toAdd.getCount()) {
-                            invStack.setCount(invStack.getCount() + toAdd.getCount());
-                            return Optional.empty(); // all done here
-                        }
+                    // combined the counts are valid amounts, calculated like so to prevent underflows
+                    if (stackFree >= toAdd.getCount()) invStack.setCount(invStack.getCount() + toAdd.getCount());
 
-                        // max out the current stack, so add the rest in a new one down below
+                    // max out the current stack, so add the rest in a new one down below
+                    else {
                         toAdd.setCount(toAdd.getCount() - stackFree);
                         invStack.setCount(ItemStackable.STACK_SIZE_MAX);
                     }
-                    break;// we found the stack, hence there are no more with room
-                }
-            }
+                });
+            
+            // if we've depleted our stack to add we're already done
+            if (toAdd.getCount() == 0)
+                return;
         }
 
         // stacks are full or no need to stack, so add remainder to the end
         inv.add(item);
-        return Optional.empty();
     }
 
     // get the first item from the inventory if there is one
@@ -72,17 +67,17 @@ public class Inventory implements Streamable {
     }
 
     public Optional<Item> removeItem(Item item) {
-    	if (!(item instanceof ItemStackable)) {
-    		int index = inv.lastIndexOf(item);
-    		
-    		if (index > -1) {
-    			inv.remove(index);
-        		return Optional.empty();// item removed
-    		}
-    		
-    		return Optional.of(item);// item not found
-    	}
-    	
+        if (!(item instanceof ItemStackable)) {
+            int index = inv.lastIndexOf(item);
+            
+            if (index > -1) {
+                inv.remove(index);
+                return Optional.empty();// item removed
+            }
+            
+            return Optional.of(item);// item not found
+        }
+        
         ItemStackable stack = (ItemStackable) item;
 
         // remove starting from the end
@@ -99,7 +94,7 @@ public class Inventory implements Streamable {
                 
                 // the found inventory stack has the exact amount, and must be removed
                 if (invStack.getCount() == stack.getCount()) {
-                	inv.remove(i);
+                    inv.remove(i);
                     return Optional.empty();
                 }
 

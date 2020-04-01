@@ -44,7 +44,8 @@ public class MyInventoryComponent extends Component {
             // if needed, create the inventory with some arbitrary size
             if (inventory == null) inventories.put(event.getPlayer().getId(), inventory = new Inventory());
 
-            event.setItem(inventory.addItem(event.getItem()));
+            inventory.addItem(event.getItem());
+            event.setItem(Optional.empty());
         }
     }
 
